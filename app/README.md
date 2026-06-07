@@ -1,149 +1,176 @@
 ﻿# HarbourRWA
 
-> **AI & RWA Track · Human-Driven RWA Infrastructure · Deployed on Mantle Network**
+> **AI & RWA Track · Human-Driven RWA Infrastructure · Compliance-to-Claim RWA Lifecycle on Mantle**
 
-HarbourRWA is a Mantle-native RWA infrastructure stack that collapses the four broken steps of traditional asset issuance — compliance review, investor onboarding, token minting, and post-issuance coupon servicing — into one verifiable on-chain pipeline.
+HarbourRWA is a Mantle-native RWA infrastructure stack for regulated issuance. It turns AI compliance work into on-chain permission primitives, routes issuer submissions through sponsor and SFC review, gates minting through smart contracts, and closes the post-issuance loop with on-chain coupon funding, investor claims, and AI portfolio guidance.
 
 ## One-Line Pitch
 
-HarbourRWA is the first RWA infrastructure where AI compliance output becomes an on-chain permission primitive: the score gates minting, the prospectus hash is anchored on-chain, and investors claim USDY coupons through the contract — not a spreadsheet.
+HarbourRWA is the first end-to-end RWA workflow where AI-generated compliance evidence, investor eligibility, regulator approval, mint permission, coupon funding, and investor claims are all verifiable on Mantle.
 
-## Five Core Highlights
+## Why HarbourRWA Can Win The RWA Track
 
-### 1. AI Output Is an On-Chain Permission Primitive
+Most RWA demos stop at token creation. HarbourRWA proves the full regulated lifecycle:
 
-Most RWA projects use AI as a chatbot layer. HarbourRWA uses it as a permission source.
+| Lifecycle Stage | Typical Hackathon Demo | HarbourRWA |
+|---|---|---|
+| Prospectus preparation | Static text or PDF upload | AI prospectus drafter with SFC-style sections, risk flags, and downloadable document flow |
+| Sponsor review | Manual dashboard | Sponsor inbox receives issuer submissions from `/tokenize` and runs AI compliance review |
+| Compliance evidence | Off-chain report | AI score and report hash written to `ComplianceOracle.sol` on Mantle |
+| Regulator approval | Mock approval flag | `/regulator/issuance` handles issuance records, approval, and change-request branches |
+| Smart contract audit | Not shown | `/audit` surfaces contract review and finding severity for the issuance stack |
+| Investor onboarding | Centralised whitelist | `IdentityRegistry.sol` stores KYC and eligibility state used by mint and transfer checks |
+| Subscription | UI-controlled mint button | `ComplianceModule.canMint()` gates `HarbourRWAToken.mintForAsset()` at contract level |
+| Coupon servicing | Usually missing | Issuer funds the coupon pool in-contract; investor claims pro-rata coupon on-chain |
+| Wealth management | Generic chatbot | AI advisor reads live holdings and coupon schedule, then generates a transparent rebalance plan |
 
-The AI engine analyses a prospectus and outputs a 0–100 compliance score plus a report hash. That score is written to `ComplianceOracle.sol` on Mantle via `submitScore(assetId, score, reportHash)`. `ComplianceModule.canMint(wallet, assetId)` reads the oracle before every mint. If the score is below threshold, the contract rejects the transaction — not the UI, the contract.
+The project is designed for the **Human-Driven RWA Infrastructure** path: issuer teams, licensed sponsors, compliance officers, regulators, and professional investors remain in the workflow, while AI and smart contracts make their decisions verifiable.
 
+## Three On-Chain Proof Loops
+
+### 1. AI Compliance Becomes On-Chain Permission
+
+The AI engine analyses the prospectus against SFC-oriented rules, outputs a 0-100 score, and binds the result to a report hash. That result is written to `ComplianceOracle.sol` through `submitScore(assetId, score, reportHash)`.
+
+```text
+Issuer submission
+  -> AI compliance engine
+  -> score + reportHash
+  -> ComplianceOracle.submitScore(...)
+  -> ComplianceModule.canMint(...)
+  -> HarbourRWAToken.mintForAsset(...) passes or reverts
 ```
-AI Engine  →  submitScore()  →  ComplianceOracle (Mantle)
-                                       ↓
-                             ComplianceModule.canMint()
-                                       ↓
-                             HarbourRWAToken.mintForAsset()  ← passes or reverts
-```
 
-This satisfies the hackathon's hard requirement: *"AI-powered function callable on-chain."*
+The AI output is not a recommendation hidden inside the UI. It becomes a contract-readable state that decides whether issuance can proceed.
 
-### 2. The Only RWA Demo That Closes the Full Lifecycle
+### 2. Regulated Issuance Is Enforced By Contracts
 
-| Stage | Typical RWA Demo | HarbourRWA |
-|-------|-----------------|------------|
-| Compliance review | Off-chain PDF | AI score written to `ComplianceOracle` on Mantle |
-| Investor onboarding | Centralised whitelist | `IdentityRegistry` — on-chain KYC state |
-| Token minting | UI-controlled | `ComplianceModule.canMint()` — contract enforced |
-| **Coupon funding** | **Not present** | **`fundDividend()` — issuer deposits USDY into contract** |
-| **Investor claim** | **Not present** | **`claimDividend()` — pro-rata distribution, on-chain** |
+HarbourRWA separates the regulated workflow into role-specific surfaces:
 
-A bond is only worth something if you can collect coupons. HarbourRWA is the only hackathon demo that makes post-issuance servicing an on-chain, verifiable act.
+- `/tokenize` for issuer submission, approval-gated deployment, and token registration.
+- `/compliance` for Type 6 sponsor review, AI scoring, report hashing, and submission to SFC.
+- `/regulator/issuance` for SFC issuance approval or request-changes flow.
+- `/audit` for smart contract technical due diligence.
+- `/kyc` and `/admin/kyc` for investor submission and compliance officer approval.
+- `/subscribe` for KYC, declaration, payment, and compliance-gated minting.
 
-### 3. Five Critical RWA States Live on Mantle
+The important part is the gate: if oracle score, regulator status, or identity eligibility fails, the transaction is rejected at the contract layer.
 
-Mantle is not the deployment chain — it is the execution layer for every state that matters:
+### 3. Post-Issuance Servicing Is Claimable
 
-| # | State | Contract | What it proves |
-|---|-------|----------|---------------|
-| 1 | Compliance score | `ComplianceOracle` | AI output is auditable, tamper-evident |
-| 2 | Investor eligibility | `IdentityRegistry` | KYC is enforced at the contract layer |
-| 3 | Mint permission | `ComplianceModule` | Policy lives in code, not in a dashboard |
-| 4 | Coupon pool | `HarbourRWAToken.dividendFunding` | USDY is real, locked, and ring-fenced |
-| 5 | Claim record | `dividendClaims` mapping | No double-claiming; fully auditable on-chain |
+HIBT is a bond, not a decorative asset card. The portfolio flow demonstrates the part most RWA demos omit: servicing after issuance.
 
-### 4. Prospectus Hash Binding — Regulatory Compliance by Design
-
-Every registered asset stores a `prospectusCommitment` (`keccak256` of the full offering document) at the time of issuance. The AI engine reviews the same document and its hash is written alongside the compliance score. This means:
-
-- The token is cryptographically bound to a specific legal document.
-- Any document substitution is detectable on-chain.
-- This mirrors the disclosure integrity requirement under SFC rules — implemented not as a process but as an immutable on-chain link.
-
-### 5. Platform Architecture, Not a Single-Asset Demo
-
-HIBT (infrastructure bond) and KCRT (commercial REIT) share identical contracts:
-
-- Same `HarbourRWAToken.sol` — asset type distinguished by the `AssetType` enum (`Bond`, `REIT`, `GreenBond`, `TradeReceivable`)
-- Same `ComplianceModule` — compliance policy is configurable per asset
-- Same `ComplianceOracle` — scores are namespaced by `assetId`, supporting unlimited assets
-
-Any Mantle-based issuer or intermediary can deploy this stack for their own asset class without modifying a single contract. That is what makes this infrastructure rather than a demo.
+- `/portfolio` reads live HIBT balance, coupon schedule, and claim history.
+- The issuer funds the coupon pool through `fundDividend()`.
+- The investor claims a pro-rata coupon through `claimDividend()`.
+- Claim records prevent double claiming and remain auditable on-chain.
+- AI Wealth Advisor reads live holdings and schedule data before answering or rebalancing.
 
 ## What Is Live In The Demo
 
-**Primary asset:**
-- HIBT — Harbour Infrastructure Bond Token, Asia infrastructure bond with semi-annual USDY coupons
+**Primary RWA:** HIBT, Harbour Infrastructure Bond Token, a Mantle-based Asia infrastructure bond with a 5.50% semi-annual coupon.
 
-**Secondary asset:**
-- KCRT — Kowloon Commercial REIT Token, demonstrates platform reusability across asset classes
+**Additional supported asset types:** Green bonds and trade receivables, using the same core contracts and compliance flow.
 
-**Live on-chain workflow:**
+**Core demo pages:**
 
-1. `/compliance` — AI reviews the prospectus, outputs a score + report hash, writes to `ComplianceOracle.submitScore(...)` on Mantle
-2. `/kyc` — Investor onboarding writes eligibility to `IdentityRegistry` on Mantle
-3. `/subscribe` — `ComplianceModule.canMint(...)` is called; HIBT is minted only if compliance and KYC pass
-4. `/portfolio` — Reads live HIBT balance and coupon schedule from the contract; issuer funds coupon in USDY; investor claims on-chain
-5. `/tokenize` — Issuer deploys a new `HarbourRWAToken` wired to the compliance and coupon infrastructure
+| Page | Role | What judges can verify |
+|---|---|---|
+| `/` | Overview | Live issuance card, role entry points, HIBT headline economics |
+| `/prospectus` | Issuer | AI draft generation, compliance check, document download, handoff to tokenization |
+| `/tokenize` | Issuer | Submit asset, wait for sponsor/SFC approval, deploy `HarbourRWAToken` |
+| `/compliance` | Sponsor / Type 6 LC | Sponsor inbox, AI SFC rule review, oracle score, report hash, SFC submission |
+| `/audit` | Technical reviewer | Smart contract review surface and severity-based findings |
+| `/regulator` | Regulator | Oversight dashboard reading issuance records and oracle-backed compliance state |
+| `/regulator/issuance` | SFC reviewer | Approve issuance or request changes for dynamic applications |
+| `/kyc` | Investor | Identity profile, professional investor classification, document upload, file hashing |
+| `/admin/kyc` | Compliance officer | KYC review, AI document score, approve and whitelist investor |
+| `/subscribe` | Investor | Pre-check, subscription, declarations, payment, compliance-gated mint |
+| `/portfolio` | Investor / Issuer | Live holdings, coupon schedule, coupon fund and claim, AI Advisor, AI Rebalance |
 
-**Adjacent capabilities (demo-scoped):**
-- AI portfolio assistant driven by the investor's real on-chain holdings
-- Prospectus drafting and sponsor inbox workflow
-- Regulator-facing audit and compliance dashboard
-- KCRT lane for asset-class breadth
+## Five Critical States On Mantle
 
-## Why It Fits the Track
+Mantle is not just a deployment badge. It is the verification layer for the states that matter in a regulated RWA lifecycle.
 
-HarbourRWA targets the Human-Driven RWA Infrastructure path. The intended users are licensed intermediaries, issuer operations teams, and regulated compliance desks — not retail consumers.
-
-AI is applied at the two most expensive and manual points in the workflow: prospectus compliance review and post-issuance portfolio guidance. In both cases the AI output feeds a structured on-chain state rather than stopping at a text response.
-
-Mantle already has a credible RWA and yield-asset foundation — USDY, mETH, and a growing institutional ecosystem. HarbourRWA fills the missing layer: a compliance oracle, an issuance gate, and a coupon servicing contract that any Mantle-native issuer can plug into.
+| # | State | Contract | Why It Matters |
+|---|---|---|---|
+| 1 | AI compliance score | `ComplianceOracle.sol` | Makes AI review tamper-evident and contract-readable |
+| 2 | Compliance report hash | `ComplianceOracle.sol` | Binds the score to a specific review artifact |
+| 3 | Investor eligibility | `IdentityRegistry.sol` | Turns KYC and PI classification into mint/transfer permissions |
+| 4 | Mint and transfer gate | `ComplianceModule.sol` | Enforces policy in code rather than front-end logic |
+| 5 | Coupon funding and claims | `HarbourRWAToken.sol` | Makes post-issuance servicing auditable and claimable |
 
 ## Architecture
 
 ```text
 Frontend (Next.js 16 / React 19 / TypeScript)
-  /compliance  →  AI prospectus review  →  ComplianceOracle.submitScore()  →  Mantle
-  /kyc         →  investor onboarding   →  IdentityRegistry.register()     →  Mantle
-  /tokenize    →  asset registration    →  HarbourRWAToken.registerAsset() →  Mantle
-  /subscribe   →  ComplianceModule.canMint()  →  HarbourRWAToken.mintForAsset()
-  /portfolio   →  live balance + coupon history  →  fundDividend() / claimDividend()
+  /prospectus          -> AI drafting + compliance check + document export
+  /tokenize            -> issuer submission + approval-gated token deployment
+  /compliance          -> sponsor inbox + AI review + oracle submission
+  /audit               -> smart contract due diligence surface
+  /regulator           -> oversight dashboard
+  /regulator/issuance  -> SFC approval / request changes
+  /kyc                 -> investor identity and document submission
+  /admin/kyc           -> compliance officer KYC approval
+  /subscribe           -> declaration + payment + compliance-gated mint
+  /portfolio           -> live holdings + coupon funding/claim + AI advisor/rebalance
 
-Smart Contracts (Mantle Sepolia / Mainnet — Solidity 0.8.24 / OpenZeppelin 5)
-  ComplianceOracle.sol   →  AI score (uint8) + reportHash (bytes32) per assetId
-  IdentityRegistry.sol   →  KYC / jurisdiction / AML state per investor
-  ComplianceModule.sol   →  mint + transfer gate; reads Oracle + Registry
-  HarbourRWAToken.sol    →  ERC-3643-inspired token; coupon schedule + fundDividend + claimDividend
-  YieldAggregator.sol    →  USDY + mETH yield routing for idle capital
+Smart Contracts (Mantle Sepolia / Mantle Mainnet, Solidity 0.8.24)
+  ComplianceOracle.sol   -> AI score and reportHash per assetId
+  IdentityRegistry.sol   -> KYC, jurisdiction, AML, and PI eligibility state
+  ComplianceModule.sol   -> mint and transfer gate reading Oracle + Registry
+  HarbourRWAToken.sol    -> ERC-3643-inspired asset token, coupon schedule, fundDividend, claimDividend
+  YieldAggregator.sol    -> allocation surface for external settlement and yield assets used in the advisor demo
 ```
 
-## Two-Minute Judge Demo
+## Smart Contract Flow
 
-1. `/compliance` — Upload the HIBT submission package. Run AI review. Show the Mantle tx hash and report hash from the oracle write.
-2. `/kyc` — Whitelist the investor wallet. Show the on-chain registry update.
-3. `/subscribe` — Attempt to mint before KYC (expect revert). Mint after KYC passes. Show the HIBT balance.
-4. `/portfolio` — Show live HIBT balance and coupon schedule read directly from the contract.
-5. Click **Fund Demo Coupon** — Issuer deposits USDY into the contract. Show the tx.
-6. Click **Claim USDY** — Investor claims their pro-rata share. Show the USDY balance increase.
-7. Open the AI advisor — Show portfolio guidance derived from the investor's actual on-chain holdings.
+```text
+1. Issuer submits HIBT package
+2. Sponsor AI review writes score + reportHash to ComplianceOracle
+3. SFC approval unlocks deployment and issuance path
+4. Investor KYC approval writes eligibility to IdentityRegistry
+5. Subscribe calls ComplianceModule.canMint(...)
+6. HarbourRWAToken.mintForAsset(...) executes only when checks pass
+7. Issuer funds the coupon pool
+8. Investor claims coupon from the contract
+9. AI advisor reads live holdings and coupon state for portfolio guidance
+```
 
-> The core argument: this project does not stop at tokenization. It proves compliance, enforces issuance, and closes coupon servicing — three loops that are each independently verifiable on Mantle.
+## Judge Demo Flow
+
+For a DoraHacks video or live judging session, show the highest-scoring path first:
+
+1. `/prospectus` - Load demo data and generate the HIBT prospectus draft with AI.
+2. `/tokenize` - Submit HIBT for intermediary review and show the Sponsor Inbox handoff.
+3. `/compliance` - Run AI compliance review, show score/report hash, and submit to SFC.
+4. `/audit` - Show technical due diligence for the smart contract stack.
+5. `/regulator/issuance` - Approve the issuance and show that approval unlocks deployment.
+6. `/kyc` - Submit investor profile and documents.
+7. `/admin/kyc` - Approve the investor and write eligibility to the identity registry.
+8. `/subscribe` - Mint 20 HIBT tokens only after oracle, SFC, and KYC checks pass.
+9. `/portfolio` - Fund a coupon, claim it as the investor, then ask AI Wealth Advisor about the next coupon payment.
+10. `/portfolio` - Click AI Rebalance to show an allocation plan based on live holdings and risk profile.
+
+The core judging message: **HarbourRWA does not merely tokenize an asset. It proves compliance, enforces issuance, services coupons, and gives investors intelligent post-issuance management in one Mantle workflow.**
 
 ## Scoring Coverage
 
-| Judging Dimension | Weight | How HarbourRWA Addresses It |
-|-------------------|--------|----------------------------|
-| Technical Depth | 30% | Five-contract system; AI oracle writes on-chain; ERC-3643 compliance gate; end-to-end coupon servicing |
-| Innovation | 25% | AI output as on-chain permission primitive — a new AI × Web3 paradigm not seen in prior RWA tooling |
-| Mantle Ecosystem Contribution | 25% | Five critical RWA states on Mantle; USDY as coupon currency; mETH yield routing; reusable public infrastructure |
-| Product Completeness | 20% | Full lifecycle runnable demo; two asset classes; live frontend; deployable by any issuer |
+| Judging Dimension | HarbourRWA Advantage |
+|---|---|
+| Technical Depth | Multi-contract Mantle system; AI oracle write; ERC-3643-inspired compliance gate; live coupon funding and claims; role-based regulated workflow |
+| Innovation | AI output becomes on-chain permission rather than a chatbot response; regulated approvals become executable infrastructure |
+| Mantle Ecosystem Contribution | Core RWA lifecycle state lives on Mantle; coupon servicing and allocation logic are demonstrated with on-chain state |
+| Product Completeness | Issuer, sponsor, regulator, investor, KYC admin, audit, subscription, portfolio, and AI advisor flows are all present |
+| RWA Track Fit | Targets institutional RWA infrastructure, not a retail wrapper; HIBT bond economics create a real need for post-issuance servicing |
 
 ## Submission Narrative
 
-- **Asset on-chain:** Asia infrastructure bond (HIBT) primary; commercial REIT (KCRT) secondary
-- **AI role:** Compliance review → structured score + report hash → on-chain oracle; post-issuance portfolio guidance from real holdings
-- **Mantle realization:** `ComplianceOracle`, `IdentityRegistry`, `ComplianceModule`, `HarbourRWAToken`, `YieldAggregator` — all deployed on Mantle; USDY for coupon settlement
-- **Verifiable value:** Every critical step produces a Mantle contract call visible on MantleScan
-- **Ecosystem fit:** Built on Mantle's existing RWA and yield-asset foundation; adds the missing compliance, issuance, and servicing layer
+- **Asset on-chain:** HIBT, an Asia infrastructure bond with semi-annual on-chain coupon servicing.
+- **AI role:** Prospectus drafting, SFC-oriented compliance review, structured scoring, report hashing, KYC document assistance, portfolio question answering, and AI Rebalance.
+- **Mantle realization:** `ComplianceOracle`, `IdentityRegistry`, `ComplianceModule`, `HarbourRWAToken`, and `YieldAggregator` anchor the workflow on Mantle.
+- **Verifiable value:** Compliance evidence, investor eligibility, mint permission, coupon funding, and coupon claims are visible as contract-backed state.
+- **Why it deserves first prize:** It turns RWA from a tokenization screen into a complete regulated issuance and servicing pipeline.
 
 ## Local Setup
 
@@ -170,7 +197,7 @@ Required environment variables:
 - `NEXT_PUBLIC_COMPLIANCE_MODULE_ADDRESS`
 - `NEXT_PUBLIC_HARBOUR_RWA_TOKEN_ADDRESS`
 - `NEXT_PUBLIC_YIELD_AGGREGATOR_ADDRESS`
-- `NEXT_PUBLIC_USDY_ADDRESS`
+- External asset address variables required by your deployment environment
 
 The deploy script writes an `.env.deployed` snippet you can copy into your local environment.
 
@@ -197,4 +224,4 @@ The deploy script writes an `.env.deployed` snippet you can copy into your local
 - Solidity 0.8.24 + Hardhat + OpenZeppelin 5
 - Mantle Sepolia / Mantle Mainnet
 - SiliconFlow + Qwen models for AI analysis
-- USDY and mETH integrations for yield and settlement demos
+- External settlement and yield asset integrations for demo flows
