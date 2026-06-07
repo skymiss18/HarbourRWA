@@ -69,3 +69,4 @@ coverage/
 /*.mjs
 /*.png
 /*.md
+!/README.md
