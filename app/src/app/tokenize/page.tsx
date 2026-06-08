@@ -1,6 +1,6 @@
 ﻿"use client";
 import { useState, useEffect } from "react";
-import { createPublicClient, http } from "viem";
+import { createPublicClient, encodeAbiParameters, http, keccak256, parseAbiParameters } from "viem";
 import { mantleSepoliaTestnet, mantle } from "viem/chains";
 import { useAccount, useSwitchChain, useWalletClient } from "wagmi";
 import { useConnectModal } from "@rainbow-me/rainbowkit";
@@ -149,6 +149,10 @@ jurisdiction-specific transfer restrictions on-chain.`,
   },
 } as const;
 
+const TOKEN_DECIMALS = 10n ** 18n;
+const DEFAULT_FACE_VALUE_USD = 1000n;
+const DEMO_USD_PER_MNT = 1000n;
+
 function StatusBadge({ status }: { status: AppStatus }) {
   const cfg = STATUS_CFG[status];
   return (
@@ -226,31 +230,130 @@ export default function TokenizePage() {
   const [deployError, setDeployError] = useState<string | null>(null);
 
   // ── coupon distribution state ─────────────────────────────────────────────
-  const HIBT_ASSET_ID = "0xe32839f218714251b9b3048d7e4b224859cf9ea5caf14edcc15e5cf4033e2ded" as `0x${string}`;
   const [investorInput, setInvestorInput] = useState("");
   const [fundBusy,   setFundBusy]   = useState(false);
   const [fundResult, setFundResult] = useState<{ txHash: string; payout: string } | null>(null);
   const [fundError,  setFundError]  = useState<string | null>(null);
 
+  function getCouponPaymentsPerYear(assetName: string) {
+    return /reit|kcrt/i.test(assetName) ? 4n : 2n;
+  }
+
+  function getFaceValueUsd(assetName: string) {
+    return /hibt|kcrt/i.test(assetName) ? DEFAULT_FACE_VALUE_USD : DEFAULT_FACE_VALUE_USD;
+  }
+
+  function getAssetTypeCode(assetName: string, assetType?: string) {
+    if (assetType === "REIT" || /reit|kcrt/i.test(assetName)) return 0;
+    if (assetType === "GreenBond" || /green/i.test(assetName)) return 1;
+    if (assetType === "TradeReceivable" || /trade|receivable/i.test(assetName)) return 2;
+    return 3;
+  }
+
+  function getDefaultCouponBps(assetName: string) {
+    if (/kcrt/i.test(assetName)) return 780n;
+    if (/hibt/i.test(assetName)) return 550n;
+    return 550n;
+  }
+
+  function getDefaultMaturityDate(assetName: string) {
+    if (/kcrt/i.test(assetName)) {
+      return BigInt(Math.floor(new Date("2031-12-31T00:00:00Z").getTime() / 1000));
+    }
+
+    return BigInt(Math.floor(new Date("2031-07-15T00:00:00Z").getTime() / 1000));
+  }
+
+  function getDisplayCouponPerToken(assetName: string) {
+    if (/hibt/i.test(assetName)) return "0.0275 MNT";
+    if (/kcrt/i.test(assetName)) return "0.0195 MNT";
+    return "Coupon-rate based";
+  }
+
   async function handleFundCoupon() {
+    if (!address) {
+      openConnectModal?.();
+      return;
+    }
+
     const investorAddr = investorInput.trim() || (address ?? "");
     if (!investorAddr || !/^0x[0-9a-fA-F]{40}$/.test(investorAddr)) {
       setFundError("Enter a valid investor wallet address");
       return;
     }
+
+    if (!selected?.asset?.trim()) {
+      setFundError("Select an approved asset before paying coupon");
+      return;
+    }
+
     setFundBusy(true);
     setFundError(null);
     setFundResult(null);
     try {
-      const res = await fetch("/api/portfolio/coupon/fund", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ assetId: HIBT_ASSET_ID, index: 1, wallet: investorAddr }),
+      const rwaTokenAddress = process.env.NEXT_PUBLIC_HARBOUR_RWA_TOKEN_ADDRESS as `0x${string}` | undefined;
+      if (!rwaTokenAddress || !/^0x[0-9a-fA-F]{40}$/.test(rwaTokenAddress) || rwaTokenAddress === "0x0000000000000000000000000000000000000000") {
+        throw new Error("NEXT_PUBLIC_HARBOUR_RWA_TOKEN_ADDRESS not configured");
+      }
+
+      const isMainnet = process.env.NEXT_PUBLIC_CHAIN_ID === "5000";
+      const targetChainId = isMainnet ? 5000 : 5003;
+      const targetChainDef = isMainnet ? mantle : mantleSepoliaTestnet;
+      const rpcUrl = isMainnet
+        ? (process.env.NEXT_PUBLIC_MANTLE_RPC ?? "https://rpc.mantle.xyz")
+        : (process.env.NEXT_PUBLIC_MANTLE_TESTNET_RPC ?? "https://rpc.sepolia.mantle.xyz");
+
+      await switchChainAsync({ chainId: targetChainId });
+
+      if (!wagmiWalletClient) {
+        throw new Error("No wallet connected — please connect your wallet first");
+      }
+
+      const publicClient = createPublicClient({
+        chain: targetChainDef,
+        transport: http(rpcUrl),
       });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? "Failed to fund coupon");
-      const payoutUsdy = data.payout ? (Number(data.payout) / 1e18).toFixed(2) : "?";
-      setFundResult({ txHash: data.txHash, payout: payoutUsdy });
+
+      const couponBps = getDefaultCouponBps(selected.asset);
+
+      const investorBalance = await publicClient.readContract({
+        address: rwaTokenAddress,
+        abi: artifact.abi,
+        functionName: "balanceOf",
+        args: [investorAddr as `0x${string}`],
+      }) as bigint;
+
+      if (investorBalance === 0n) {
+        throw new Error("Investor holds no HIBT tokens");
+      }
+
+      const issuerNativeBalance = await publicClient.getBalance({
+        address: address as `0x${string}`,
+      });
+
+      const faceValueUsd = getFaceValueUsd(selected.asset);
+      const couponPaymentsPerYear = getCouponPaymentsPerYear(selected.asset);
+      const amountPerToken = (faceValueUsd * TOKEN_DECIMALS * couponBps) / 10000n / couponPaymentsPerYear / DEMO_USD_PER_MNT;
+      const payout = (amountPerToken * investorBalance) / TOKEN_DECIMALS;
+
+      if (payout === 0n) {
+        throw new Error("Calculated payout is zero");
+      }
+
+      if (issuerNativeBalance <= payout) {
+        throw new Error("Issuer wallet does not hold enough native MNT to pay this coupon and gas");
+      }
+
+      const txHash = await wagmiWalletClient.sendTransaction({
+        to: investorAddr as `0x${string}`,
+        value: payout,
+        account: address,
+        chain: targetChainDef,
+      });
+
+      await publicClient.waitForTransactionReceipt({ hash: txHash, timeout: 60_000 });
+
+      setFundResult({ txHash, payout: (Number(payout) / 1e18).toFixed(4) });
     } catch (e) {
       setFundError(e instanceof Error ? e.message : "Fund failed");
     } finally {
@@ -292,6 +395,12 @@ export default function TokenizePage() {
       active = false;
     };
   }, []);
+
+  useEffect(() => {
+    setFundBusy(false);
+    setFundError(null);
+    setFundResult(null);
+  }, [selected?.id]);
 
   async function handleDeploy() {
     if (!selected || deploying) return;
@@ -933,9 +1042,9 @@ export default function TokenizePage() {
                     View on Mantle Explorer →
                   </a>
 
-                  {/* ── Coupon Distribution ─────────────────────────────────── */}
+                  {/* ── Coupon Payment ───────────────────────────────────────── */}
                   <div className="rounded-xl p-5 space-y-4 mt-2" style={{ background: "rgba(16,185,129,0.04)", border: "1px solid rgba(16,185,129,0.2)" }}>
-                    <div className="text-[10px] font-bold uppercase tracking-widest text-emerald-700">Coupon Distribution · HIBT</div>
+                    <div className="text-[10px] font-bold uppercase tracking-widest text-emerald-700">Pay Coupon · HIBT</div>
                     {/* Schedule table */}
                     <table className="w-full text-[11px]">
                       <thead>
@@ -948,17 +1057,17 @@ export default function TokenizePage() {
                       <tbody>
                         <tr style={{ borderBottom: "1px solid rgba(0,0,0,0.05)" }}>
                           <td className="py-1.5 text-slate-700">15 Jan 2026</td>
-                          <td className="py-1.5 text-right font-mono text-slate-700">27.50 USDY</td>
+                          <td className="py-1.5 text-right font-mono text-slate-700">{getDisplayCouponPerToken(selected.asset)} </td>
                           <td className="py-1.5 text-right">
-                            <span className="px-2 py-0.5 rounded text-[10px] font-semibold" style={{ background: "rgba(16,185,129,0.12)", color: "#059669" }}>Distributed</span>
+                            <span className="px-2 py-0.5 rounded text-[10px] font-semibold" style={{ background: "rgba(16,185,129,0.12)", color: "#059669" }}>Paid</span>
                           </td>
                         </tr>
                         <tr>
                           <td className="py-1.5 text-slate-700">15 Jul 2026</td>
-                          <td className="py-1.5 text-right font-mono text-slate-700">27.50 USDY</td>
+                          <td className="py-1.5 text-right font-mono text-slate-700">{getDisplayCouponPerToken(selected.asset)} </td>
                           <td className="py-1.5 text-right">
                             {fundResult
-                              ? <span className="px-2 py-0.5 rounded text-[10px] font-semibold" style={{ background: "rgba(16,185,129,0.12)", color: "#059669" }}>Distributed</span>
+                              ? <span className="px-2 py-0.5 rounded text-[10px] font-semibold" style={{ background: "rgba(16,185,129,0.12)", color: "#059669" }}>Paid</span>
                               : <span className="px-2 py-0.5 rounded text-[10px] font-semibold" style={{ background: "rgba(245,158,11,0.12)", color: "#d97706" }}>Pending</span>
                             }
                           </td>
@@ -990,15 +1099,15 @@ export default function TokenizePage() {
                         >
                           {fundBusy ? (
                             <><div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> Distributing...</>
-                          ) : "💸  Distribute Jul 2026 Coupon →"}
+                          ) : "💸  Pay Jul 2026 Coupon →"}
                         </button>
                       </div>
                     )}
 
                     {fundResult && (
                       <div className="rounded-lg px-4 py-3 space-y-1" style={{ background: "rgba(16,185,129,0.08)", border: "1px solid rgba(16,185,129,0.25)" }}>
-                        <div className="text-[11px] font-bold text-emerald-700">✅ Coupon Distributed</div>
-                        <div className="text-[11px] text-slate-600">{fundResult.payout} USDY sent to investor wallet</div>
+                        <div className="text-[11px] font-bold text-emerald-700">✅ Coupon Paid</div>
+                        <div className="text-[11px] text-slate-600">{fundResult.payout} MNT sent from issuer wallet to investor wallet</div>
                         <a href={`https://sepolia.mantlescan.xyz/tx/${fundResult.txHash}`} target="_blank" rel="noopener noreferrer"
                           className="text-[10px] font-mono text-emerald-700 hover:underline break-all">
                           Tx: {fundResult.txHash.slice(0, 20)}...
