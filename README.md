@@ -1,8 +1,8 @@
-# HarbourRWA
+# **HarbourRWA**
 
 > AI + RWA infrastructure on Mantle: from compliance review to issuance, subscription, coupon servicing, and investor guidance.
 
-## DoraHacks Summary
+## **DoraHacks Summary**
 
 HarbourRWA is a human-in-the-loop RWA infrastructure project built on Mantle. It combines AI decision support with on-chain enforcement so that compliance review, investor eligibility, regulator approval, mint permission, coupon servicing, and portfolio assistance are connected in one verifiable workflow.
 
@@ -14,7 +14,7 @@ This project is not just about tokenizing an asset.
 
 The result is a more realistic RWA stack: AI improves workflow speed and structure, while Mantle guarantees that the approved result becomes executable infrastructure.
 
-## The Problem
+## **The Problem**
 
 Most RWA demos stop at one of these points:
 
@@ -24,7 +24,7 @@ Most RWA demos stop at one of these points:
 
 That leaves a major gap between a tokenization demo and a usable regulated asset workflow.
 
-## Our Solution
+## **Our Solution**
 
 HarbourRWA closes that gap with an end-to-end pipeline:
 
@@ -36,7 +36,7 @@ HarbourRWA closes that gap with an end-to-end pipeline:
 6. Coupon funding and investor claims are executed on-chain.
 7. AI continues into the post-issuance phase through investor Q&A and portfolio guidance.
 
-## Why AI + RWA Matters
+## **Why AI + RWA Matters**
 
 The key innovation is the connection between AI output and contract enforcement.
 
@@ -46,7 +46,7 @@ The key innovation is the connection between AI output and contract enforcement.
 
 In one sentence: **AI creates structured decision support, and Mantle turns approved outcomes into enforceable state.**
 
-## What Judges Can Verify
+## **What Judges Can Verify**
 
 Judges can verify three concrete proof loops:
 
@@ -59,7 +59,7 @@ Approval is not a mock flag in the UI. If approval, oracle score, or investor el
 3. Post-issuance servicing is actually implemented.
 The issuer funds coupon distributions on-chain, the investor claims them on-chain, and the portfolio layer reads live holdings and schedule data.
 
-## Product Scope
+## **Product Scope**
 
 HarbourRWA includes role-specific flows for the main participants in regulated issuance:
 
@@ -80,7 +80,7 @@ Core application surfaces:
 - `/subscribe`: subscription and compliance-gated minting
 - `/portfolio`: coupon funding, coupon claim, AI advisor, and allocation guidance
 
-## Why This Is Strong For DoraHacks
+## **Why This Is Strong For DoraHacks**
 
 HarbourRWA fits the Human-Driven RWA Infrastructure theme because it focuses on real workflow enforcement instead of UI simulation.
 
@@ -89,7 +89,7 @@ HarbourRWA fits the Human-Driven RWA Infrastructure theme because it focuses on 
 - It shows the full lifecycle, not only issuance.
 - It keeps humans responsible for approvals while making the final state auditable and programmable.
 
-## Smart Contract Architecture
+## **Smart Contract Architecture**
 
 Main contracts:
 
@@ -107,7 +107,7 @@ Critical on-chain states:
 - mint permission
 - coupon funding and coupon claims
 
-## Demo Flow
+## **Demo Flow**
 
 Recommended judging flow:
 
@@ -121,7 +121,7 @@ Recommended judging flow:
 8. Claim coupon as the investor.
 9. Use the AI advisor to explain the next coupon event and suggest allocation changes.
 
-## Technical Highlights
+## **Technical Highlights**
 
 - Next.js 16 + React 19 + TypeScript frontend
 - Solidity 0.8.24 + Hardhat smart contracts
@@ -129,7 +129,7 @@ Recommended judging flow:
 - AI-assisted prospectus, compliance, KYC, and portfolio flows
 - Contract-level enforcement instead of UI-only gating
 
-## Local Setup
+## **Local Setup**
 
 ```bash
 cd app
@@ -152,6 +152,6 @@ Required environment variables:
 - `NEXT_PUBLIC_COMPLIANCE_ORACLE_ADDRESS`
 - `NEXT_PUBLIC_IDENTITY_REGISTRY_ADDRESS`
 
-## Submission Message
+## **Submission Message**
 
 HarbourRWA shows a credible path for AI in regulated finance: not replacing human oversight, but structuring decisions and turning approved outcomes into on-chain infrastructure. That is the difference between a tokenization demo and a usable RWA system.
