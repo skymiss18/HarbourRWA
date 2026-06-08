@@ -2,15 +2,40 @@
 
 > **AI & RWA Track · Human-Driven RWA Infrastructure · Compliance-to-Claim RWA Lifecycle on Mantle**
 
-HarbourRWA is a Mantle-native RWA infrastructure stack for regulated issuance. It turns AI compliance work into on-chain permission primitives, routes issuer submissions through sponsor and SFC review, gates minting through smart contracts, and closes the post-issuance loop with on-chain coupon funding, investor claims, and AI portfolio guidance.
+HarbourRWA is a Mantle-native RWA infrastructure project that combines AI decision support with on-chain enforcement. It turns prospectus review, compliance scoring, investor onboarding, and portfolio guidance into verifiable workflow steps, then anchors the critical outcomes on Mantle so issuance, minting, and coupon servicing are enforced by contract state rather than screenshots or PDF approvals.
 
 ## One-Line Pitch
 
-HarbourRWA is the first end-to-end RWA workflow where AI-generated compliance evidence, investor eligibility, regulator approval, mint permission, coupon funding, and investor claims are all verifiable on Mantle.
+HarbourRWA is an end-to-end RWA workflow where AI produces usable compliance and investor-assistance outputs, and smart contracts turn those outputs into verifiable permissions, approvals, and post-issuance servicing on Mantle.
+
+## Judge Takeaway
+
+HarbourRWA is not presenting AI and RWA as two separate ideas placed side by side.
+
+- AI is used to draft prospectus content, score compliance, assist KYC review, answer investor questions, and generate allocation suggestions.
+- RWA infrastructure is used to make the important results of those steps enforceable on-chain.
+- The combination matters because the project shows how AI can improve regulated asset workflows without replacing human oversight, while blockchain guarantees that the final compliance and issuance state cannot be silently overridden.
+
+In short: **AI creates structured decision support, and Mantle turns the approved result into executable infrastructure.**
+
+## Why The AI + RWA Combination Matters
+
+Most projects only do one of these two things:
+
+- use AI as a chat layer with no contract consequence
+- use tokenization contracts without solving the real compliance workflow
+
+HarbourRWA connects the two.
+
+- AI reduces document friction, speeds up review, and makes compliance work machine-readable.
+- Smart contracts convert that machine-readable output into mint gates, eligibility checks, and claimable servicing logic.
+- Human actors remain in control: issuer, sponsor, regulator, compliance officer, and investor each keep their role.
+
+That is the core product insight for judges: **the project is not only about tokenizing an asset, but about making regulated financial workflow programmable.**
 
 ## Why HarbourRWA Can Win The RWA Track
 
-Most RWA demos stop at token creation. HarbourRWA proves the full regulated lifecycle:
+Most RWA demos stop at token creation or dashboard simulation. HarbourRWA proves the full regulated lifecycle and shows where AI adds operational value:
 
 | Lifecycle Stage | Typical Hackathon Demo | HarbourRWA |
 |---|---|---|
@@ -24,7 +49,7 @@ Most RWA demos stop at token creation. HarbourRWA proves the full regulated life
 | Coupon servicing | Usually missing | Issuer funds the coupon pool in-contract; investor claims pro-rata coupon on-chain |
 | Wealth management | Generic chatbot | AI advisor reads live holdings and coupon schedule, then generates a transparent rebalance plan |
 
-The project is designed for the **Human-Driven RWA Infrastructure** path: issuer teams, licensed sponsors, compliance officers, regulators, and professional investors remain in the workflow, while AI and smart contracts make their decisions verifiable.
+The project is designed for the **Human-Driven RWA Infrastructure** path: issuer teams, licensed sponsors, compliance officers, regulators, and professional investors remain in the workflow, while AI makes the workflow faster and more structured, and smart contracts make the final state verifiable.
 
 ## Three On-Chain Proof Loops
 
@@ -41,7 +66,7 @@ Issuer submission
 	-> HarbourRWAToken.mintForAsset(...) passes or reverts
 ```
 
-The AI output is not a recommendation hidden inside the UI. It becomes a contract-readable state that decides whether issuance can proceed.
+The AI output is not a recommendation hidden inside the UI. It becomes a contract-readable state that directly affects whether issuance can proceed.
 
 ### 2. Regulated Issuance Is Enforced By Contracts
 
@@ -54,7 +79,7 @@ HarbourRWA separates the regulated workflow into role-specific surfaces:
 - `/kyc` and `/admin/kyc` for investor submission and compliance officer approval.
 - `/subscribe` for KYC, declaration, payment, and compliance-gated minting.
 
-The important part is the gate: if oracle score, regulator status, or identity eligibility fails, the transaction is rejected at the contract layer.
+The important part is the gate: if oracle score, regulator status, or identity eligibility fails, the transaction is rejected at the contract layer. This is the point where AI-assisted review becomes RWA infrastructure rather than a front-end feature.
 
 ### 3. Post-Issuance Servicing Is Claimable
 
@@ -152,14 +177,14 @@ For a DoraHacks video or live judging session, show the highest-scoring path fir
 9. `/portfolio` - Fund a coupon, claim it as the investor, then ask AI Wealth Advisor about the next coupon payment.
 10. `/portfolio` - Click AI Rebalance to show an allocation plan based on live holdings and risk profile.
 
-The core judging message: **HarbourRWA does not merely tokenize an asset. It proves compliance, enforces issuance, services coupons, and gives investors intelligent post-issuance management in one Mantle workflow.**
+The core judging message: **HarbourRWA does not merely tokenize an asset. It uses AI to structure regulated workflow and uses Mantle contracts to enforce the approved result across issuance, eligibility, minting, servicing, and investor management.**
 
 ## Scoring Coverage
 
 | Judging Dimension | HarbourRWA Advantage |
 |---|---|
 | Technical Depth | Multi-contract Mantle system; AI oracle write; ERC-3643-inspired compliance gate; live coupon funding and claims; role-based regulated workflow |
-| Innovation | AI output becomes on-chain permission rather than a chatbot response; regulated approvals become executable infrastructure |
+| Innovation | AI output becomes contract-relevant permission rather than a chatbot response; regulated approvals become executable infrastructure |
 | Mantle Ecosystem Contribution | Core RWA lifecycle state lives on Mantle; coupon servicing and allocation logic are demonstrated with on-chain state |
 | Product Completeness | Issuer, sponsor, regulator, investor, KYC admin, audit, subscription, portfolio, and AI advisor flows are all present |
 | RWA Track Fit | Targets institutional RWA infrastructure, not a retail wrapper; the bond economics create a real need for post-issuance servicing |
@@ -167,10 +192,10 @@ The core judging message: **HarbourRWA does not merely tokenize an asset. It pro
 ## Submission Narrative
 
 - **Asset on-chain:** a demo infrastructure bond with semi-annual on-chain coupon servicing.
-- **AI role:** Prospectus drafting, SFC-oriented compliance review, structured scoring, report hashing, KYC document assistance, portfolio question answering, and AI Rebalance.
+- **AI role:** Prospectus drafting, SFC-oriented compliance review, structured scoring, report hashing, KYC document assistance, portfolio question answering, and allocation guidance.
 - **Mantle realization:** `ComplianceOracle`, `IdentityRegistry`, `ComplianceModule`, `HarbourRWAToken`, and `YieldAggregator` anchor the workflow on Mantle.
 - **Verifiable value:** Compliance evidence, investor eligibility, mint permission, coupon funding, and coupon claims are visible as contract-backed state.
-- **Why it deserves first prize:** It turns RWA from a tokenization screen into a complete regulated issuance and servicing pipeline.
+- **Why it deserves first prize:** It turns RWA from a tokenization screen into a complete regulated issuance and servicing pipeline, and shows a credible way for AI to participate in that pipeline without removing human control.
 
 ## Local Setup
 
