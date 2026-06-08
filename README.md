@@ -58,9 +58,9 @@ The important part is the gate: if oracle score, regulator status, or identity e
 
 ### 3. Post-Issuance Servicing Is Claimable
 
-HIBT is a bond, not a decorative asset card. The portfolio flow demonstrates the part most RWA demos omit: servicing after issuance.
+The demo bond asset is not a decorative asset card. The portfolio flow demonstrates the part most RWA demos omit: servicing after issuance.
 
-- `/portfolio` reads live HIBT balance, coupon schedule, and claim history.
+- `/portfolio` reads live bond holdings, coupon schedule, and claim history.
 - The issuer funds the coupon pool through `fundDividend()`.
 - The investor claims a pro-rata coupon through `claimDividend()`.
 - Claim records prevent double claiming and remain auditable on-chain.
@@ -68,7 +68,7 @@ HIBT is a bond, not a decorative asset card. The portfolio flow demonstrates the
 
 ## What Is Live In The Demo
 
-**Primary RWA:** HIBT, Harbour Infrastructure Bond Token, a Mantle-based Asia infrastructure bond with a 5.50% semi-annual coupon.
+**Primary RWA:** a demo infrastructure bond asset with a 5.50% semi-annual coupon.
 
 **Additional supported asset types:** Green bonds and trade receivables, using the same core contracts and compliance flow.
 
@@ -76,7 +76,7 @@ HIBT is a bond, not a decorative asset card. The portfolio flow demonstrates the
 
 | Page | Role | What judges can verify |
 |---|---|---|
-| `/` | Overview | Live issuance card, role entry points, HIBT headline economics |
+| `/` | Overview | Live issuance card, role entry points, and headline bond economics |
 | `/prospectus` | Issuer | AI draft generation, compliance check, document download, handoff to tokenization |
 | `/tokenize` | Issuer | Submit asset, wait for sponsor/SFC approval, deploy `HarbourRWAToken` |
 | `/compliance` | Sponsor / Type 6 LC | Sponsor inbox, AI SFC rule review, oracle score, report hash, SFC submission |
@@ -126,7 +126,7 @@ Smart Contracts (Mantle Sepolia / Mantle Mainnet, Solidity 0.8.24)
 ## Smart Contract Flow
 
 ```text
-1. Issuer submits HIBT package
+1. Issuer submits the bond issuance package
 2. Sponsor AI review writes score + reportHash to ComplianceOracle
 3. SFC approval unlocks deployment and issuance path
 4. Investor KYC approval writes eligibility to IdentityRegistry
@@ -141,14 +141,14 @@ Smart Contracts (Mantle Sepolia / Mantle Mainnet, Solidity 0.8.24)
 
 For a DoraHacks video or live judging session, show the highest-scoring path first:
 
-1. `/prospectus` - Load demo data and generate the HIBT prospectus draft with AI.
-2. `/tokenize` - Submit HIBT for intermediary review and show the Sponsor Inbox handoff.
+1. `/prospectus` - Load demo data and generate the bond prospectus draft with AI.
+2. `/tokenize` - Submit the bond application for intermediary review and show the Sponsor Inbox handoff.
 3. `/compliance` - Run AI compliance review, show score/report hash, and submit to SFC.
 4. `/audit` - Show technical due diligence for the smart contract stack.
 5. `/regulator/issuance` - Approve the issuance and show that approval unlocks deployment.
 6. `/kyc` - Submit investor profile and documents.
 7. `/admin/kyc` - Approve the investor and write eligibility to the identity registry.
-8. `/subscribe` - Mint 20 HIBT tokens only after oracle, SFC, and KYC checks pass.
+8. `/subscribe` - Mint 20 bond tokens only after oracle, SFC, and KYC checks pass.
 9. `/portfolio` - Fund a coupon, claim it as the investor, then ask AI Wealth Advisor about the next coupon payment.
 10. `/portfolio` - Click AI Rebalance to show an allocation plan based on live holdings and risk profile.
 
@@ -162,11 +162,11 @@ The core judging message: **HarbourRWA does not merely tokenize an asset. It pro
 | Innovation | AI output becomes on-chain permission rather than a chatbot response; regulated approvals become executable infrastructure |
 | Mantle Ecosystem Contribution | Core RWA lifecycle state lives on Mantle; coupon servicing and allocation logic are demonstrated with on-chain state |
 | Product Completeness | Issuer, sponsor, regulator, investor, KYC admin, audit, subscription, portfolio, and AI advisor flows are all present |
-| RWA Track Fit | Targets institutional RWA infrastructure, not a retail wrapper; HIBT bond economics create a real need for post-issuance servicing |
+| RWA Track Fit | Targets institutional RWA infrastructure, not a retail wrapper; the bond economics create a real need for post-issuance servicing |
 
 ## Submission Narrative
 
-- **Asset on-chain:** HIBT, an Asia infrastructure bond with semi-annual on-chain coupon servicing.
+- **Asset on-chain:** a demo infrastructure bond with semi-annual on-chain coupon servicing.
 - **AI role:** Prospectus drafting, SFC-oriented compliance review, structured scoring, report hashing, KYC document assistance, portfolio question answering, and AI Rebalance.
 - **Mantle realization:** `ComplianceOracle`, `IdentityRegistry`, `ComplianceModule`, `HarbourRWAToken`, and `YieldAggregator` anchor the workflow on Mantle.
 - **Verifiable value:** Compliance evidence, investor eligibility, mint permission, coupon funding, and coupon claims are visible as contract-backed state.
