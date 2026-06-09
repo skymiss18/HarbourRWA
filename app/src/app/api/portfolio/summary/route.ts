@@ -31,7 +31,7 @@ async function findPrimaryAsset(configured: boolean): Promise<{ assetName: strin
             abi: HARBOUR_RWA_TOKEN_ABI,
             functionName: "assets",
             args: [buildAssetId(name)],
-          }) as [boolean, ...unknown[]];
+          }) as readonly [boolean, ...unknown[]];
           if (!info[0]) continue; // not registered on-chain yet
         } catch {
           continue;
@@ -115,12 +115,13 @@ async function readCouponHistory(assetId: `0x${string}`, wallet: `0x${string}`, 
         abi: HARBOUR_RWA_TOKEN_ABI,
         functionName: "dividendSchedules",
         args: [assetId, BigInt(index)],
-      }) as { paymentDate: bigint; amountPerToken: bigint; distributed: boolean };
+      }) as readonly [bigint, bigint, boolean];
+      const [paymentDate, amountPerToken, distributed] = record;
 
       let claimed = false;
       let claimableAmountUsd = 0;
 
-      if (claimEnabled && record.distributed) {
+      if (claimEnabled && distributed) {
         try {
           const [hasClaimed, claimableRaw] = await Promise.all([
             publicClient.readContract({
@@ -147,9 +148,9 @@ async function readCouponHistory(assetId: `0x${string}`, wallet: `0x${string}`, 
 
       history.push({
         index,
-        paymentDate: new Date(Number(record.paymentDate) * 1000).toISOString().slice(0, 10),
-        amountPerTokenUsd: Number(formatUnits(record.amountPerToken, 18)),
-        distributed: record.distributed,
+        paymentDate: new Date(Number(paymentDate) * 1000).toISOString().slice(0, 10),
+        amountPerTokenUsd: Number(formatUnits(amountPerToken, 18)),
+        distributed,
         label: "Scheduled distribution",
         claimableAmountUsd,
         claimed,

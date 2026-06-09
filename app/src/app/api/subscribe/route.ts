@@ -126,7 +126,7 @@ export async function POST(req: NextRequest) {
         abi: HARBOUR_RWA_TOKEN_ABI,
         functionName: "assets",
         args: [assetId],
-      }) as [boolean, number, string, bigint, bigint, `0x${string}`];
+      }) as readonly [boolean, number, string, bigint, bigint, `0x${string}`];
 
       if (!assetInfo[0]) {
         // Derive a simple asset type from the name (default: Bond = 3)

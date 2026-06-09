@@ -113,7 +113,7 @@ export async function POST(req: NextRequest) {
           address: yieldAddr,
           abi: YIELD_AGGREGATOR_ABI,
           functionName: "getYieldInfo",
-        }) as [number, number, bigint];
+        }) as readonly [number, number, bigint];
         usdyApy = info[0];
         methApy = info[1];
       } catch { /* use defaults */ }
@@ -186,7 +186,7 @@ export async function GET(req: NextRequest) {
       address: yieldAddr,
       abi: YIELD_AGGREGATOR_ABI,
       functionName: "getYieldInfo",
-    }) as [number, number, bigint];
+    }) as readonly [number, number, bigint];
 
     let lastRebalanceData = null;
     if (wallet && /^0x[0-9a-fA-F]{40}$/.test(wallet)) {
@@ -196,7 +196,7 @@ export async function GET(req: NextRequest) {
           abi: YIELD_AGGREGATOR_ABI,
           functionName: "lastRebalance",
           args: [wallet],
-        }) as [bigint, bigint, bigint, number, string];
+        }) as readonly [bigint, bigint, bigint, number, string];
         if (r[0] > BigInt(0)) {
           lastRebalanceData = {
             timestamp:   new Date(Number(r[0]) * 1000).toISOString(),

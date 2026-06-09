@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getWalletClient, IDENTITY_REGISTRY_ABI, registryAddress } from "@/lib/chain";
+import { publicClient, getWalletClient, IDENTITY_REGISTRY_ABI, registryAddress } from "@/lib/chain";
 import { keccak256, toHex } from "viem";
 
 // POST /api/kyc/submit
