@@ -152,6 +152,45 @@ Required environment variables:
 - `NEXT_PUBLIC_COMPLIANCE_ORACLE_ADDRESS`
 - `NEXT_PUBLIC_IDENTITY_REGISTRY_ADDRESS`
 
-## **Submission Message**
+## **Deployed Contracts (Mantle Sepolia, Chain ID 5003)**
+
+| Contract | Address | Explorer |
+|----------|---------|---------|
+| `ComplianceOracle.sol` | `0xe9B84c856d4D0c6bE37D75E6e8fdb7f3C75DcAFD` | [MantleScan](https://sepolia.mantlescan.xyz/address/0xe9B84c856d4D0c6bE37D75E6e8fdb7f3C75DcAFD) |
+| `IdentityRegistry.sol` | `0x47e231d6b090C2bBFF760a741687aFa99ebe3031` | [MantleScan](https://sepolia.mantlescan.xyz/address/0x47e231d6b090C2bBFF760a741687aFa99ebe3031) |
+| `ComplianceModule.sol` | `0xcAc067b92B910711AC31032eb35c711527a44699` | [MantleScan](https://sepolia.mantlescan.xyz/address/0xcAc067b92B910711AC31032eb35c711527a44699) |
+| `HarbourRWAToken.sol` (HIBT) | `0x5b92134F804a766C566Ab253F40642F28E9b3007` | [MantleScan](https://sepolia.mantlescan.xyz/address/0x5b92134F804a766C566Ab253F40642F28E9b3007) |
+| `YieldAggregator.sol` | `0x446C5EEBD12463eC688CC459a8802bF9718CB364` | [MantleScan](https://sepolia.mantlescan.xyz/address/0x446C5EEBD12463eC688CC459a8802bF9718CB364) |
+
+Key on-chain evidence:
+
+- **AI compliance oracle write (HIBT)**: [`0xd9067568...`](https://sepolia.mantlescan.xyz/tx/0xd9067568c7915fa20f33b8b362f499aa3a06ee0adecb0786a8c1d11fd083fad0)
+- **SFC regulator approval**: [`0xae1d9b58...`](https://sepolia.mantlescan.xyz/tx/0xae1d9b58b240f68c63f2caa0594ee21360e8efc48153ad4454703bb64c1098d8)
+- **HIBT token deploy**: [`0x30e86a06...`](https://sepolia.mantlescan.xyz/tx/0x30e86a0670ca0cb9bdc4e0ca09f8b3579acb63563c6dade636258eeef310a384)
+
+## **Architecture Overview**
+
+```
+Frontend (Next.js 16 + React 19 + Tailwind)
+  /prospectus  → AI drafts SFC-compliant offering memorandum
+  /compliance  → Sponsor reviews with AI; writes score to oracle
+  /kyc         → Investor submits KYC docs; admin approves
+  /subscribe   → Compliance-gated mint (oracle + KYC check)
+  /portfolio   → Live holdings, coupon claim, AI yield advisor
+
+Smart Contracts (Solidity 0.8.24, Mantle Sepolia)
+  ComplianceOracle   ← AI writes score + report hash here
+  IdentityRegistry   ← KYC state per investor address
+  ComplianceModule   ← canMint() / canTransfer() gate
+  HarbourRWAToken    ← ERC-3643 token, coupon schedule & claims
+  YieldAggregator    ← Routes idle capital to USDY / mETH
+
+AI Layer (SiliconFlow / OpenAI)
+  Prospectus drafting  → structured SFC rule check → compliance score
+  Score + hash         → ComplianceOracle.submitScore() on Mantle
+  Post-issuance        → reads live holdings → portfolio guidance
+```
+
+
 
 HarbourRWA shows a credible path for AI in regulated finance: not replacing human oversight, but structuring decisions and turning approved outcomes into on-chain infrastructure. That is the difference between a tokenization demo and a usable RWA system.
